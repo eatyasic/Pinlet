@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' pinlet: data:; style-src 'self' 'unsafe-inline'; script-src 'self'">
+<title>Pinlet marker</title>
+<link rel="stylesheet" href="shared/base.css">
+<style>
+  html, body { width: 100%; height: 100%; background: transparent; overflow: hidden; }
+  .box {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    border-radius: 8px;
+    transform: translate(-50%, -50%) rotate(var(--rot, 0deg));
+  }
+  .box::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border: 1.5px solid transparent;
+    border-radius: 8px;
+    pointer-events: none;
+  }
+  .box.target::after { border-color: var(--brand); }
+  .art {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.12s ease-out, filter 0.12s ease-out;
+  }
+  .art svg, .art img { display: block; }
+  .box.hover .art { transform: scale(1.06); }
+  .box.dragging .art { transform: scale(1.06); filter: drop-shadow(0 12px 14px rgba(24, 24, 27, 0.28)); }
+  .box.dragging::after { border-color: transparent; }
+  .box.nudge { animation: nudge 0.28s ease-in-out; }
+  @keyframes nudge {
+    0%, 100% { translate: 0 0; }
+    25% { translate: -3px 0; }
+    75% { translate: 3px 0; }
+  }
+</style>
+</head>
+<body>
+<div class="box" id="box"><div class="art" id="art"></div></div>
+<script type="module" src="marker.js"></script>
+</body>
+</html>

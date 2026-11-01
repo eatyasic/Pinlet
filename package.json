@@ -1,0 +1,82 @@
+{
+  "name": "pinlet",
+  "productName": "Pinlet",
+  "version": "0.1.0",
+  "description": "화면 위 어디에나 마커를 띄워 두는 데스크톱 앱",
+  "author": "eatyasic",
+  "license": "MIT",
+  "homepage": "https://github.com/eatyasic/Pinlet",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/eatyasic/Pinlet.git"
+  },
+  "main": "src/main/main.js",
+  "private": true,
+  "scripts": {
+    "start": "electron .",
+    "icons": "node scripts/make-icons.js",
+    "snapshot": "node scripts/snapshot.js",
+    "dist": "electron-builder",
+    "dist:mac": "electron-builder --mac",
+    "dist:win": "electron-builder --win"
+  },
+  "build": {
+    "appId": "app.pinlet.desktop",
+    "productName": "Pinlet",
+    "files": [
+      "src/**/*",
+      "assets/**/*",
+      "package.json"
+    ],
+    "mac": {
+      "category": "public.app-category.productivity",
+      "icon": "assets/icon.png",
+      "identity": "-",
+      "hardenedRuntime": false,
+      "target": [
+        {
+          "target": "dmg",
+          "arch": [
+            "arm64",
+            "x64"
+          ]
+        }
+      ],
+      "artifactName": "${productName}-mac-${arch}.${ext}",
+      "extendInfo": {
+        "LSUIElement": true
+      }
+    },
+    "win": {
+      "icon": "assets/icon.png",
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "artifactName": "${productName}-Setup-${arch}.${ext}"
+    },
+    "linux": {
+      "icon": "assets/icon.png",
+      "target": [
+        "AppImage"
+      ]
+    },
+    "publish": null,
+    "dmg": {
+      "title": "${productName}"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "shortcutName": "Pinlet"
+    }
+  },
+  "devDependencies": {
+    "electron": "^45.1.0",
+    "electron-builder": "^26.18.0"
+  }
+}

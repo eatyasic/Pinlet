@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' pinlet: data:; style-src 'self' 'unsafe-inline'; script-src 'self'">
+<title>Pinlet menu</title>
+<link rel="stylesheet" href="shared/base.css">
+<style>
+  html, body { background: transparent; overflow: hidden; }
+  body { padding: 16px; width: 304px; }
+  .head { display: flex; align-items: center; gap: 10px; padding: 6px 8px 8px; }
+  .thumb { width: 32px; height: 32px; flex: none; border-radius: 8px; background: var(--surface-2); display: flex; align-items: center; justify-content: center; }
+  .name { font-size: 13.5px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .meta { font-size: 12px; color: var(--text-3); }
+  .slider { padding: 6px 10px; }
+  .slider:first-of-type { padding-top: 8px; }
+  .slider-head { display: flex; align-items: center; justify-content: space-between; height: 20px; font-size: 13px; }
+  .value { display: flex; align-items: center; gap: 4px; font-size: 12.5px; color: var(--text-2); font-variant-numeric: tabular-nums; }
+  .value .icon-btn { width: 22px; height: 22px; margin-right: -4px; border-radius: 5px; }
+  input[type="range"] { width: 100%; margin: 8px 0 0; accent-color: var(--brand); cursor: pointer; }
+  .spaces { padding: 8px 10px; }
+  .spaces .seg { margin-top: 8px; display: grid; grid-template-columns: 1fr 1fr; border-radius: 8px; }
+  .spaces .seg-btn { height: 28px; font-size: 12.5px; border-radius: 6px; }
+  .spaces-hint { margin-top: 6px; font-size: 12px; line-height: 16px; color: var(--text-3); }
+  .lock-hint { padding: 0 10px 6px; font-size: 12px; color: var(--text-3); }
+  .row[aria-disabled="true"] { opacity: 0.5; }
+</style>
+</head>
+<body>
+<div class="pop" id="pop">
+  <div class="head">
+    <div class="thumb" id="thumb"></div>
+    <div style="min-width:0">
+      <div class="name" id="name"></div>
+      <div class="meta" id="meta"></div>
+    </div>
+  </div>
+  <div class="divider"></div>
+
+  <div class="slider">
+    <div class="slider-head"><label for="size">크기</label><span class="value" id="sizeValue"></span></div>
+    <input id="size" type="range" min="24" max="240" step="4">
+  </div>
+  <div class="slider">
+    <div class="slider-head"><label for="opacity">불투명도</label><span class="value" id="opacityValue"></span></div>
+    <input id="opacity" type="range" min="10" max="100" step="5">
+  </div>
+  <div class="slider">
+    <div class="slider-head">
+      <label for="rotation">회전</label>
+      <span class="value"><span id="rotationValue"></span><button class="icon-btn" id="resetRotation" aria-label="회전 0도로 되돌리기"></button></span>
+    </div>
+    <input id="rotation" type="range" min="-180" max="180" step="1">
+  </div>
+
+  <div id="spacesBlock">
+    <div class="divider"></div>
+    <div class="spaces">
+      <div style="font-size:13px">표시할 스페이스</div>
+      <div class="seg" id="spaces">
+        <button class="seg-btn" data-space="all" aria-pressed="false">모든 스페이스</button>
+        <button class="seg-btn" data-space="current" aria-pressed="false">현재 스페이스만</button>
+      </div>
+      <div class="spaces-hint" id="spacesHint"></div>
+    </div>
+  </div>
+  <div class="divider"></div>
+
+  <button class="row" role="switch" aria-checked="false" id="onTop"><span>항상 위에 표시</span><span class="switch"></span></button>
+  <button class="row" role="switch" aria-checked="false" id="locked"><span>마커 잠금</span><span class="switch"></span></button>
+  <div class="lock-hint" id="lockHint" hidden>도구바에서 ‘모든 마커 잠금’이 켜져 있어요</div>
+  <div class="divider"></div>
+
+  <button class="row" id="edit"></button>
+  <button class="row" id="duplicate"></button>
+  <div class="divider"></div>
+  <button class="row row-danger" id="remove"></button>
+</div>
+<script type="module" src="menu.js"></script>
+</body>
+</html>

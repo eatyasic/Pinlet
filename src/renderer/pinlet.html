@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' pinlet: data:; style-src 'self' 'unsafe-inline'; script-src 'self'">
+<title>Pinlet</title>
+<link rel="stylesheet" href="shared/base.css">
+<link rel="stylesheet" href="pinlet.css">
+</head>
+<body>
+<div class="win">
+  <header class="head">
+    <div class="head-left">
+      <span class="logo" id="logo"></span>
+      <div class="seg" role="tablist" aria-label="Pinlet 메뉴">
+        <button class="seg-btn" role="tab" data-tab="markers" aria-selected="true">내 마커 <span class="count" id="count"></span></button>
+        <button class="seg-btn" role="tab" data-tab="settings" aria-selected="false">설정</button>
+      </div>
+    </div>
+    <button class="icon-btn" id="closeWin" aria-label="창 닫기"></button>
+  </header>
+
+  <section class="tab" id="tab-markers" role="tabpanel">
+    <div class="scroll">
+      <p class="lead">고른 마커를 화면에 추가하세요. 크기·불투명도·회전은 화면에서 마커를 우클릭해 바꿔요.</p>
+      <div class="grid" id="grid"></div>
+      <div class="tip" id="firstRunTip" hidden>
+        <span class="tip-icon" id="tipIcon"></span>
+        <span>처음엔 원 하나로 시작해요. ‘추가하기’에서 도형을 골라 색을 입히거나, 이미지(GIF 포함)를 올려 새 마커를 만들 수 있어요. 이미지 파일을 이 창에 끌어다 놓아도 돼요.</span>
+      </div>
+    </div>
+    <footer class="foot">
+      <span class="foot-hint" id="footHint">타일을 더블클릭해도 바로 추가돼요</span>
+      <div class="foot-actions" id="footActions">
+        <button class="btn" id="editBtn"></button>
+        <button class="btn btn-primary" id="addBtn"></button>
+      </div>
+      <p class="foot-empty" id="footEmpty" hidden>마커가 없어요. ‘추가하기’로 새로 만들어 보세요.</p>
+    </footer>
+  </section>
+
+  <section class="tab" id="tab-settings" role="tabpanel" hidden>
+    <div class="scroll">
+      <h2 class="group-title">시작</h2>
+      <div class="group">
+        <button class="set-row" role="switch" aria-checked="false" data-setting="launchAtLogin">
+          <span class="set-text"><span class="set-label">로그인할 때 자동으로 실행</span><span class="set-desc">켜 두면 컴퓨터를 켤 때 도구바에 아이콘이 바로 떠요</span></span>
+          <span class="switch"></span>
+        </button>
+        <button class="set-row" role="switch" aria-checked="false" data-setting="openOnLaunch">
+          <span class="set-text"><span class="set-label">실행할 때 이 창 열기</span><span class="set-desc">끄면 도구바 아이콘만 조용히 나타나요</span></span>
+          <span class="switch"></span>
+        </button>
+      </div>
+
+      <h2 class="group-title">마커</h2>
+      <div class="group">
+        <div class="set-row static">
+          <span class="set-text"><span class="set-label">새 마커가 놓이는 곳</span><span class="set-desc">‘화면에 추가’나 도구바에서 추가할 때 적용돼요</span></span>
+          <div class="seg seg-sm" id="placement">
+            <button class="seg-btn" data-value="cursor" aria-pressed="false">커서 위치</button>
+            <button class="seg-btn" data-value="center" aria-pressed="false">화면 중앙</button>
+          </div>
+        </div>
+      </div>
+
+      <h2 class="group-title">단축키</h2>
+      <div class="group">
+        <div class="key-row"><span>모든 마커 숨기기 · 보이기</span><kbd id="keyHidden"></kbd></div>
+        <div class="key-row"><span>모든 마커 잠금 · 해제</span><kbd id="keyLock"></kbd></div>
+        <div class="key-row"><span>이 창 열기</span><kbd id="keyOpen"></kbd></div>
+      </div>
+    </div>
+  </section>
+
+  <div class="overlay" id="dialog" hidden>
+    <section class="dialog" role="dialog" aria-modal="true" aria-labelledby="dlgTitle">
+      <div class="dlg-head">
+        <h2 id="dlgTitle">새 마커 만들기</h2>
+        <button class="icon-btn" id="dlgClose" aria-label="닫기"></button>
+      </div>
+
+      <div class="seg seg-full" id="dlgMode">
+        <button class="seg-btn" data-mode="shape" aria-pressed="true">도형에 색 입히기</button>
+        <button class="seg-btn" data-mode="image" aria-pressed="false">이미지 올리기</button>
+      </div>
+
+      <div class="dlg-body">
+        <div id="modeShape">
+          <div class="shape-top">
+            <div class="shape-preview" id="shapePreview"></div>
+            <div class="name-slot" id="nameSlotShape"></div>
+          </div>
+          <div class="dlg-label">모양</div>
+          <div class="shape-grid" id="shapeGrid"></div>
+          <div class="dlg-label-row"><span class="dlg-label">색</span><span class="muted" id="colorName"></span></div>
+          <div class="swatches" id="swatches"></div>
+        </div>
+
+        <div class="drop" id="modeImageEmpty" hidden>
+          <span class="drop-icon" id="dropIcon"></span>
+          <span class="drop-title">이미지를 여기로 끌어다 놓으세요</span>
+          <span class="muted">PNG · JPG · GIF · WEBP · SVG</span>
+          <button class="btn btn-sm drop-btn" id="pickFile">파일 선택</button>
+          <span class="muted small">움직이는 GIF도 화면에서 그대로 재생돼요</span>
+        </div>
+
+        <div id="modeImageChosen" hidden>
+          <div class="name-slot" id="nameSlotImage"></div>
+          <div class="image-preview checker" id="imagePreview">
+            <span class="gif-chip" id="imageGif" hidden>GIF</span>
+            <img id="imagePreviewImg" alt="" draggable="false">
+          </div>
+          <div class="file-row">
+            <div class="file-text">
+              <div class="file-name" id="fileName"></div>
+              <div class="muted small" id="fileMeta"></div>
+            </div>
+            <button class="btn btn-sm" id="changeFile">다른 파일</button>
+          </div>
+        </div>
+
+        <p class="dlg-error" id="dlgError" hidden></p>
+      </div>
+
+      <div class="dlg-foot">
+        <button class="btn btn-danger" id="deleteMarker" hidden></button>
+        <button class="btn" id="dlgCancel">취소</button>
+        <button class="btn btn-primary" id="dlgSubmit">만들기</button>
+      </div>
+
+      <div class="name-field" id="nameField">
+        <label for="nameInput" class="dlg-label">이름</label>
+        <input id="nameInput" class="field" type="text" maxlength="40" autocomplete="off" spellcheck="false">
+        <span class="muted small" id="nameHint"></span>
+      </div>
+    </section>
+  </div>
+
+  <div class="toast" id="toast" role="status" hidden></div>
+</div>
+<script type="module" src="pinlet.js"></script>
+</body>
+</html>
