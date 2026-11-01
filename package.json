@@ -26,7 +26,13 @@
     "files": [
       "src/**/*",
       "assets/**/*",
-      "package.json"
+      "package.json",
+      "!node_modules/koffi/{src,doc,vendor,lib}/**",
+      "!node_modules/koffi/build/koffi/{darwin_*,freebsd_*,linux_*,musl_*,openbsd_*,win32_arm64,win32_ia32}/**",
+      "!node_modules/koffi/build/koffi/win32_x64/koffi.{exp,lib}"
+    ],
+    "asarUnpack": [
+      "node_modules/koffi/**/*.node"
     ],
     "mac": {
       "category": "public.app-category.productivity",
@@ -45,7 +51,10 @@
       "artifactName": "${productName}-mac-${arch}.${ext}",
       "extendInfo": {
         "LSUIElement": true
-      }
+      },
+      "files": [
+        "!node_modules/koffi/**"
+      ]
     },
     "win": {
       "icon": "assets/icon.png",
@@ -57,7 +66,17 @@
           ]
         }
       ],
-      "artifactName": "${productName}-Setup-${arch}.${ext}"
+      "artifactName": "${productName}-Setup-${arch}.${ext}",
+      "extraResources": [
+        {
+          "from": "vendor/win",
+          "to": "vendor",
+          "filter": [
+            "VirtualDesktopAccessor.dll",
+            "LICENSE.txt"
+          ]
+        }
+      ]
     },
     "linux": {
       "icon": "assets/icon.png",
@@ -78,5 +97,8 @@
   "devDependencies": {
     "electron": "^45.1.0",
     "electron-builder": "^26.18.0"
+  },
+  "dependencies": {
+    "koffi": "2.16.3"
   }
 }

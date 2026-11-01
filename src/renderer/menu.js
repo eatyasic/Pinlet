@@ -7,6 +7,7 @@ let inst = null;
 let marker = null;
 let pending = {};
 let frame = 0;
+let spaceWord = '스페이스'; // "데스크톱" on Windows
 
 $('resetRotation').innerHTML = ICON.reset;
 
@@ -30,8 +31,8 @@ function renderValues() {
     btn.setAttribute('aria-pressed', String(btn.dataset.space === inst.space));
   }
   $('spacesHint').textContent = inst.space === 'current'
-    ? '지금 보고 있는 스페이스에서만 보여요'
-    : '모든 스페이스에서 같은 자리에 보여요';
+    ? `지금 보고 있는 ${spaceWord}에서만 보여요`
+    : `모든 ${spaceWord}에서 같은 자리에 보여요`;
 }
 
 function render(payload) {
@@ -45,6 +46,10 @@ function render(payload) {
   $('opacity').value = inst.opacity;
   $('rotation').value = inst.rotation;
   $('spacesBlock').hidden = !payload.spacesSupported;
+  spaceWord = payload.spaceWord;
+  $('spacesTitle').textContent = `표시할 ${spaceWord}`;
+  $('spaces').querySelector('[data-space="all"]').textContent = `모든 ${spaceWord}`;
+  $('spaces').querySelector('[data-space="current"]').textContent = `현재 ${spaceWord}만`;
   $('locked').setAttribute('aria-checked', String(inst.locked || payload.lockAll));
   $('locked').setAttribute('aria-disabled', String(payload.lockAll));
   $('lockHint').hidden = !payload.lockAll;

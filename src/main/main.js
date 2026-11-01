@@ -8,6 +8,7 @@ const path = require('path');
 const { randomUUID } = require('crypto');
 const { createStore } = require('./store');
 const { createImages } = require('./images');
+const { createDesktops } = require('./desktops');
 
 const IS_MAC = process.platform === 'darwin';
 const ROOT = path.join(__dirname, '..', '..');
@@ -71,7 +72,16 @@ const markerWins = new Map(); // instance id → BrowserWindow
 const markerSenders = new Map(); // webContents id → instance id
 const drags = new Map(); // instance id → drag origin
 
+// Windows virtual desktops (see desktops.js). Markers the shell tracks are pinned to every
+// desktop; markers it ignores show on every desktop anyway, so "current desktop only" hides
+// them while another desktop is active.
+let desktops = { supported: false };
+let activeDesktop = -1;
+let desktopTimer = null;
+const shellTracked = new Map(); // instance id → whether the shell manages the window's desktop
+
 const state = () => store.get();
+const spacesSupported = () => IS_MAC || desktops.supported;
 const clamp = (v, lo, hi) => Math.min(Math.max(v, lo), hi);
 const num = (v, fallback) => (Number.isFinite(Number(v)) ? Number(v) : fallback);
 // A square window big enough for the marker at any rotation, plus room for the outline and drag shadow.
@@ -158,7 +168,7 @@ function uiState() {
     total: s.instances.length,
     settings: s.settings,
     platform: process.platform,
-    spacesSupported: IS_MAC,
+    spacesSupported: spacesSupported(),
     shortcuts: SHORTCUT_LABELS
   };
 }
@@ -200,7 +210,9 @@ function pushMarker(id) {
 function applyWindowLevel(win, inst) {
   if (inst.onTop) win.setAlwaysOnTop(true, 'floating');
   else win.setAlwaysOnTop(false);
-  if (IS_MAC) {
+  if (desktops.supported) {
+    syncDesktop(inst.id);
+  } else if (IS_MAC) {
     const all = inst.space !== 'current';
     win.setVisibleOnAllWorkspaces(all, { visibleOnFullScreen: all, skipTransformProcessType: true });
   }
@@ -242,8 +254,10 @@ function createMarkerWindow(inst) {
   applyWindowLevel(win, inst);
   win.webContents.once('did-finish-load', () => {
     pushMarker(inst.id);
-    if (!state().settings.hidden) win.showInactive();
+    if (markerShown(inst)) win.showInactive();
   });
+  // A window that is shown again gets a new shell view, so its desktop pin is reapplied.
+  win.on('show', () => syncDesktop(inst.id));
   win.on('closed', () => {
     markerWins.delete(inst.id);
     markerSenders.delete(senderId);
@@ -291,13 +305,67 @@ function placementPoint(size, source) {
   };
 }
 
+// ---------------------------------------------------------------- Windows virtual desktops
+
+function markerShown(inst) {
+  if (state().settings.hidden) return false;
+  if (!desktops.supported || inst.space !== 'current' || shellTracked.get(inst.id) !== false) return true;
+  return inst.desktop == null || inst.desktop === activeDesktop;
+}
+
+function refreshMarkers() {
+  for (const inst of state().instances) {
+    const win = markerWins.get(inst.id);
+    if (!win || win.isDestroyed()) continue;
+    const show = markerShown(inst);
+    if (show && !win.isVisible()) win.showInactive();
+    else if (!show && win.isVisible()) win.hide();
+  }
+}
+
+function rememberDesktop(inst) {
+  if (!desktops.supported || inst.space !== 'current') return;
+  const n = desktops.current();
+  if (n >= 0) inst.desktop = activeDesktop = n;
+}
+
+// Pins or unpins a visible marker window. The shell may not have registered a window that
+// was just shown, so a failure is retried once before the window counts as untracked.
+function syncDesktop(id, retries = 1) {
+  const inst = findInstance(id);
+  const win = markerWins.get(id);
+  if (!desktops.supported || !inst || !win || win.isDestroyed() || !win.isVisible()) return;
+  const tracked = desktops.pin(win, inst.space !== 'current') === 1;
+  if (!tracked && retries > 0) {
+    setTimeout(() => syncDesktop(id, retries - 1), 600);
+    return;
+  }
+  shellTracked.set(id, tracked);
+  if (!markerShown(inst)) win.hide();
+  watchDesktops();
+}
+
+// Untracked "current desktop only" markers need to hear when the active desktop changes.
+function watchDesktops() {
+  const needed = state().instances.some((i) => i.space === 'current' && shellTracked.get(i.id) === false);
+  if (needed && !desktopTimer) {
+    desktopTimer = setInterval(() => {
+      const n = desktops.current();
+      if (n < 0 || n === activeDesktop) return;
+      activeDesktop = n;
+      refreshMarkers();
+    }, 250);
+  } else if (!needed && desktopTimer) {
+    clearInterval(desktopTimer);
+    desktopTimer = null;
+  }
+}
+
+// ---------------------------------------------------------------- instances
+
 function setHidden(hidden) {
   state().settings.hidden = hidden;
-  for (const win of markerWins.values()) {
-    if (win.isDestroyed()) continue;
-    if (hidden) win.hide();
-    else win.showInactive();
-  }
+  refreshMarkers();
   if (hidden) closeMenu();
 }
 
@@ -320,6 +388,7 @@ function addInstance(markerId, overrides = {}, source = '') {
   };
   inst.cx = p.x;
   inst.cy = p.y;
+  rememberDesktop(inst);
   state().instances.push(inst);
   if (state().settings.hidden) setHidden(false);
   createMarkerWindow(inst);
@@ -332,6 +401,8 @@ function removeInstance(id) {
   const s = state();
   s.instances = s.instances.filter((i) => i.id !== id);
   closeMarkerWindow(id);
+  shellTracked.delete(id);
+  watchDesktops();
   commit();
 }
 
@@ -341,6 +412,7 @@ function updateInstance(id, patch) {
   const clean = cleanPatch(patch);
   const sizeChanged = 'size' in clean && clean.size !== inst.size;
   Object.assign(inst, clean);
+  if ('space' in clean) rememberDesktop(inst);
   const win = markerWins.get(id);
   if (win && !win.isDestroyed()) {
     if (sizeChanged) placeMarkerWindow(inst);
@@ -417,7 +489,8 @@ function menuPayload(inst) {
     instance: inst,
     marker: findMarker(inst.markerId),
     lockAll: state().settings.lockAll,
-    spacesSupported: IS_MAC,
+    spacesSupported: spacesSupported(),
+    spaceWord: IS_MAC ? '스페이스' : '데스크톱',
     shortcuts: SHORTCUT_LABELS
   };
 }
@@ -806,6 +879,12 @@ function start() {
     images.prune(new Set(s.library.map((m) => m.file).filter(Boolean)));
     store.save();
 
+    const vendor = app.isPackaged ? path.join(process.resourcesPath, 'vendor') : path.join(ROOT, 'vendor', 'win');
+    desktops = SNAPSHOT_DIR && process.env.PINLET_FAKE_DESKTOPS
+      ? require('./snapshot').fakeDesktops()
+      : createDesktops(vendor);
+    if (desktops.supported) activeDesktop = desktops.current();
+
     for (const inst of s.instances) createMarkerWindow(inst);
     createTray();
     createPopover();
@@ -817,7 +896,8 @@ function start() {
         dir: SNAPSHOT_DIR, flags, state, store, images, commit, addInstance, openPinlet, showPopover, openMenu, closeMenu, setSetting,
         windows: () => ({ pinletWin, popoverWin, menuWin, noticeWin, markerWins }),
         menuTarget: () => menuTarget,
-        showLockedNotice, findInstance, userData: app.getPath('userData')
+        virtualDesktops: () => ({ desktops, tracked: shellTracked }),
+        showLockedNotice, findInstance, updateInstance, userData: app.getPath('userData')
       });
     }
   });

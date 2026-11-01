@@ -111,7 +111,7 @@ xattr -dr com.apple.quarantine /Applications/Pinlet.app
 
 ### macOS와 Windows가 조금 달라요
 
-- **표시할 스페이스**는 macOS에서만 고를 수 있어요. Windows 가상 데스크톱은 Electron이 지원하지 않아서 메뉴에서 빠져 있어요.
+- **표시할 스페이스**는 Windows에선 `표시할 데스크톱`으로 나와요. 가상 데스크톱마다 마커를 띄울지 고를 수 있어요. 다만 Windows 11 24H2 · 25H2에서만 쓸 수 있고, 그보다 오래된 Windows에선 메뉴에서 빠져 있어요.
 - **도구바 아이콘**은 macOS에선 흑백( 다크 모드면 자동으로 반전 ), Windows에선 파란 아이콘이에요.
 - **창을 닫아도** 앱은 도구바에 남아 있어요. 완전히 끄려면 도구바에서 `Pinlet 종료`를 눌러 주세요.
 
@@ -168,7 +168,8 @@ src/
 ├─ main/
 │  ├─ main.js       창 · 트레이 · 단축키 · IPC
 │  ├─ store.js      상태 저장 (userData/pinlet.json)
-│  └─ images.js     올린 이미지 복사 · 정리
+│  ├─ images.js     올린 이미지 복사 · 정리
+│  └─ desktops.js   Windows 가상 데스크톱 (vendor/win DLL)
 ├─ preload.js       렌더러에 여는 window.pinlet API
 └─ renderer/
    ├─ pinlet.*      Pinlet 창 (내 마커 · 설정 · 마커 만들기)
@@ -185,3 +186,5 @@ src/
 ## 라이선스
 
 [MIT](LICENSE)
+
+Windows 가상 데스크톱 기능은 [VirtualDesktopAccessor](https://github.com/Ciantic/VirtualDesktopAccessor)( MIT )와 [Koffi](https://koffi.dev)( MIT )를 써요.

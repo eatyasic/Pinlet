@@ -160,6 +160,33 @@ async function interactionChecks(ctx, { ring, pointer }) {
     `target ${ctx.menuTarget() === ring.id ? 'ok' : ctx.menuTarget()}, visible ${ctx.windows().menuWin.isVisible()}`);
   ctx.closeMenu();
 
+  // Windows virtual desktops: the real DLL on Windows 11 24H2+, or PINLET_FAKE_DESKTOPS anywhere.
+  const vd = ctx.virtualDesktops();
+  if (vd.desktops.supported) {
+    const win = markerWin(ring);
+    ctx.updateInstance(ring.id, { space: 'all' });
+    await wait(1500);
+    const tracked = vd.tracked.get(ring.id);
+    check('desktop: marker on every desktop', tracked ? vd.desktops.isPinned(win) === 1 : win.isVisible(),
+      tracked ? 'pinned by the shell' : 'shell does not track marker windows, shown everywhere');
+    ctx.updateInstance(ring.id, { space: 'current' });
+    await wait(1500);
+    const inst = ctx.findInstance(ring.id);
+    check('desktop: current-only marker remembers its desktop', inst.desktop === vd.desktops.current(),
+      `desktop ${inst.desktop}`);
+    if (tracked) check('desktop: current-only marker is unpinned', vd.desktops.isPinned(win) === 0);
+    if (!tracked && 'active' in vd.desktops) {
+      vd.desktops.active = inst.desktop + 1;
+      await wait(600);
+      const hiddenElsewhere = !win.isVisible();
+      vd.desktops.active = inst.desktop;
+      await wait(600);
+      check('desktop: hidden on other desktops, back on its own', hiddenElsewhere && win.isVisible());
+    }
+    ctx.updateInstance(ring.id, { space: 'all' });
+    await wait(1000);
+  }
+
   // Hide all hides every marker window; showing restores them.
   ctx.setSetting('hidden', true);
   await wait(150);
@@ -180,4 +207,24 @@ async function interactionChecks(ctx, { ring, pointer }) {
   console.log(report);
 }
 
-module.exports = { run };
+// Stand-in for desktops.js so the Windows desktop logic can be checked on any OS.
+// PINLET_FAKE_DESKTOPS=tracked acts like a shell that pins marker windows,
+// any other value like one that ignores them.
+function fakeDesktops() {
+  const tracked = process.env.PINLET_FAKE_DESKTOPS === 'tracked';
+  const pinned = new Map();
+  const fake = {
+    supported: true,
+    active: 0,
+    current: () => fake.active,
+    pin: (win, all) => {
+      if (!tracked) return -1;
+      pinned.set(win.id, all);
+      return 1;
+    },
+    isPinned: (win) => (tracked ? Number(Boolean(pinned.get(win.id))) : -1)
+  };
+  return fake;
+}
+
+module.exports = { run, fakeDesktops };
