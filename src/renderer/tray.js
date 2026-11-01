@@ -31,6 +31,10 @@ function render() {
   $('clearAll').style.opacity = app.total === 0 ? '0.45' : '';
   $('openSettings').innerHTML = `${ICON.gear}<span>설정 열기…</span><span class="kbd">${shortcuts.open}</span>`;
   $('quit').innerHTML = `${ICON.power}<span>Pinlet 종료</span><span class="kbd">${app.platform === 'darwin' ? '⌘Q' : ''}</span>`;
+
+  const ready = app.update.state === 'ready';
+  $('updateBlock').hidden = !ready;
+  if (ready) $('installUpdate').innerHTML = `${ICON.download}<span>${escapeHTML(app.update.version)} 버전 설치</span><span class="kbd">다시 시작</span>`;
 }
 
 $('quick').addEventListener('click', (e) => {
@@ -45,6 +49,7 @@ $('toggleHidden').addEventListener('click', () => api.setSetting('hidden', !app.
 $('toggleLock').addEventListener('click', () => api.setSetting('lockAll', !app.settings.lockAll));
 $('clearAll').addEventListener('click', () => api.clearMarkers());
 $('quit').addEventListener('click', () => api.quit());
+$('installUpdate').addEventListener('click', () => api.installUpdate());
 
 document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape') api.hidePopover();

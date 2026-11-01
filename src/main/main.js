@@ -169,7 +169,9 @@ function uiState() {
     settings: s.settings,
     platform: process.platform,
     spacesSupported: spacesSupported(),
-    shortcuts: SHORTCUT_LABELS
+    shortcuts: SHORTCUT_LABELS,
+    version: app.getVersion(),
+    update
   };
 }
 
@@ -692,6 +694,47 @@ async function confirm(win, message, detail, okLabel) {
   return response === 0;
 }
 
+// ---------------------------------------------------------------- updates
+
+// electron-updater reads GitHub Releases (the `publish` config in package.json), downloads
+// in the background and installs on restart. Beta builds also pick up pre-releases.
+const UPDATE_INTERVAL = 6 * 60 * 60 * 1000;
+let updater = null;
+let update = { state: 'off', version: null, percent: 0 }; // off | checking | latest | downloading | ready | error
+
+function setUpdate(next) {
+  update = { ...update, ...next };
+  broadcast();
+}
+
+function startUpdater() {
+  if (!app.isPackaged || SNAPSHOT_DIR) return;
+  updater = require('electron-updater').autoUpdater;
+  updater.on('checking-for-update', () => setUpdate({ state: 'checking' }));
+  updater.on('update-not-available', () => setUpdate({ state: 'latest' }));
+  updater.on('update-available', (info) => setUpdate({ state: 'downloading', version: info.version, percent: 0 }));
+  updater.on('download-progress', (p) => setUpdate({ percent: Math.round(p.percent) }));
+  updater.on('update-downloaded', (info) => setUpdate({ state: 'ready', version: info.version }));
+  updater.on('error', (err) => {
+    console.warn(`[pinlet] update failed: ${err.message}`);
+    setUpdate({ state: 'error' });
+  });
+  checkForUpdates();
+  setInterval(checkForUpdates, UPDATE_INTERVAL);
+}
+
+function checkForUpdates() {
+  if (!updater || ['checking', 'downloading', 'ready'].includes(update.state)) return;
+  updater.checkForUpdates().catch(() => {});
+}
+
+function installUpdate() {
+  if (!updater || update.state !== 'ready') return;
+  quitting = true;
+  store.flush();
+  updater.quitAndInstall(true, true);
+}
+
 // ---------------------------------------------------------------- IPC
 
 function registerIpc() {
@@ -785,6 +828,8 @@ function registerIpc() {
   });
   ipcMain.on('pinlet:hide', () => pinletWin && pinletWin.hide());
   ipcMain.on('app:quit', () => app.quit());
+  ipcMain.on('update:check', () => checkForUpdates());
+  ipcMain.on('update:install', () => installUpdate());
 
   ipcMain.on('popover:size', (_e, height) => {
     popoverHeight = clamp(Math.ceil(num(height, popoverHeight)), 120, 900);
@@ -889,6 +934,7 @@ function start() {
     createTray();
     createPopover();
     registerShortcuts();
+    startUpdater();
     if (s.settings.openOnLaunch || SNAPSHOT_DIR) openPinlet();
 
     if (SNAPSHOT_DIR) {
@@ -897,6 +943,7 @@ function start() {
         windows: () => ({ pinletWin, popoverWin, menuWin, noticeWin, markerWins }),
         menuTarget: () => menuTarget,
         virtualDesktops: () => ({ desktops, tracked: shellTracked }),
+        setUpdate,
         showLockedNotice, findInstance, updateInstance, userData: app.getPath('userData')
       });
     }

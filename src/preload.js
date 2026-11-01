@@ -31,6 +31,8 @@ contextBridge.exposeInMainWorld('pinlet', {
   openPinlet: (options) => ipcRenderer.send('pinlet:open', options),
   hideWindow: () => ipcRenderer.send('pinlet:hide'),
   quit: () => ipcRenderer.send('app:quit'),
+  checkUpdate: () => ipcRenderer.send('update:check'),
+  installUpdate: () => ipcRenderer.send('update:install'),
   popoverSize: (height) => ipcRenderer.send('popover:size', height),
   hidePopover: () => ipcRenderer.send('popover:hide'),
 

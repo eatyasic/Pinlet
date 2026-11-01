@@ -71,8 +71,15 @@ async function run(ctx) {
   await wait(600);
   await shot(ctx.windows().pinletWin, '07-settings.png');
 
+  ctx.setUpdate({ state: 'ready', version: '0.3.0' });
+  await wait(400);
+  await shot(ctx.windows().pinletWin, '07b-settings-update-ready.png');
+
   ctx.showPopover();
   await wait(800);
+  await shot(ctx.windows().popoverWin, '08b-popover-update-ready.png');
+  ctx.setUpdate({ state: 'off', version: null });
+  await wait(400);
   await shot(ctx.windows().popoverWin, '08-popover.png');
 
   ctx.openMenu(pointer.id, { x: wa.x + 560, y: wa.y + 240 });

@@ -120,6 +120,7 @@ export const ICON = {
   power: icon('<path d="M8 1.8V7.2"/><path d="M4.4 4.2A5 5 0 1 0 11.6 4.2"/>'),
   copy: icon('<rect x="5.5" y="5.5" width="8" height="8" rx="1.5"/><path d="M10.5 3.5V3A1.5 1.5 0 0 0 9 1.5H3A1.5 1.5 0 0 0 1.5 3V9A1.5 1.5 0 0 0 3 10.5H3.5"/>'),
   reset: icon('<path d="M2.8 8A5.2 5.2 0 1 0 4.4 4.3"/><path d="M4.6 1.8V4.6H1.8"/>', 13),
+  download: icon('<path d="M8 2.7V10M5 7L8 10L11 7"/><path d="M2.7 9.3V12A1.3 1.3 0 0 0 4 13.3H12A1.3 1.3 0 0 0 13.3 12V9.3"/>'),
   upload: icon('<path d="M8 10V2.7M5 5.7L8 2.7L11 5.7"/><path d="M2.7 9.3V12A1.3 1.3 0 0 0 4 13.3H12A1.3 1.3 0 0 0 13.3 12V9.3"/>', 28, 'currentColor', 1),
   info: icon('<circle cx="8" cy="8" r="6.2"/><path d="M8 7.2V11"/><path d="M8 5H8.01"/>'),
   check: icon('<path d="M3.5 8.5L6.5 11.5L12.5 4.5"/>', 16, 'currentColor', 1.8)

@@ -95,6 +95,28 @@ function renderSettings() {
   $('keyHidden').textContent = app.shortcuts.hidden;
   $('keyLock').textContent = app.shortcuts.lockAll;
   $('keyOpen').textContent = app.shortcuts.open;
+  renderUpdate();
+}
+
+const UPDATE_TEXT = {
+  off: '개발 모드에선 업데이트를 확인하지 않아요',
+  checking: '새 버전이 있는지 확인하고 있어요',
+  latest: '최신 버전이에요',
+  error: '업데이트를 확인하지 못했어요. 인터넷 연결을 확인해 주세요'
+};
+
+function renderUpdate() {
+  const u = app.update;
+  $('updateLabel').textContent = `Pinlet ${app.version}`;
+  $('updateDesc').textContent =
+    u.state === 'downloading' ? `${u.version} 버전을 내려받고 있어요 · ${u.percent}%`
+    : u.state === 'ready' ? `${u.version} 버전이 준비됐어요. 다시 시작하면 설치돼요`
+    : UPDATE_TEXT[u.state];
+  const btn = $('updateBtn');
+  btn.hidden = u.state === 'off';
+  btn.disabled = u.state === 'checking' || u.state === 'downloading';
+  btn.classList.toggle('btn-primary', u.state === 'ready');
+  btn.textContent = u.state === 'ready' ? '다시 시작해서 설치' : '업데이트 확인';
 }
 
 function renderAll() {
@@ -289,6 +311,11 @@ for (const row of document.querySelectorAll('[data-setting]')) {
 $('placement').addEventListener('click', (e) => {
   const btn = e.target.closest('[data-value]');
   if (btn) api.setSetting('placement', btn.dataset.value);
+});
+
+$('updateBtn').addEventListener('click', () => {
+  if (app.update.state === 'ready') api.installUpdate();
+  else api.checkUpdate();
 });
 
 $('dlgMode').addEventListener('click', (e) => {
