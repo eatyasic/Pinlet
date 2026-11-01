@@ -58,6 +58,9 @@
         "LSUIElement": true
       },
       "files": [
+        "src/**/*",
+        "assets/**/*",
+        "package.json",
         "!node_modules/koffi/**"
       ]
     },
