@@ -1,7 +1,7 @@
 {
   "name": "pinlet",
   "productName": "Pinlet",
-  "version": "0.2.0-beta.1",
+  "version": "0.2.0",
   "description": "화면 위 어디에나 마커를 띄워 두는 데스크톱 앱",
   "author": "eatyasic",
   "license": "MIT",

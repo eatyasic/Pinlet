@@ -56,24 +56,18 @@ Pinlet은 화면 위에 마커를 띄워 두는 앱이에요. 원하는 자리�
 
 | OS | 파일 | 크기 |
 | --- | --- | --- |
-| macOS 12 이상 · Apple Silicon | [`Pinlet-mac-arm64.dmg`](https://github.com/eatyasic/Pinlet/releases/latest/download/Pinlet-mac-arm64.dmg) | 114MB |
-| macOS 12 이상 · Intel | [`Pinlet-mac-x64.dmg`](https://github.com/eatyasic/Pinlet/releases/latest/download/Pinlet-mac-x64.dmg) | 121MB |
+| macOS 12 이상 · Apple Silicon | [`Pinlet-mac-arm64.dmg`](https://github.com/eatyasic/Pinlet/releases/latest/download/Pinlet-mac-arm64.dmg) | 115MB |
+| macOS 12 이상 · Intel | [`Pinlet-mac-x64.dmg`](https://github.com/eatyasic/Pinlet/releases/latest/download/Pinlet-mac-x64.dmg) | 122MB |
 | Windows 10 · 11 (64비트) | [`Pinlet-Setup-x64.exe`](https://github.com/eatyasic/Pinlet/releases/latest/download/Pinlet-Setup-x64.exe) | 116MB |
 
 지난 버전과 바뀐 점은 [Releases](https://github.com/eatyasic/Pinlet/releases)에서 볼 수 있어요.
 
 ### 처음 열 때
 
-아직 Apple · Microsoft 서명을 받지 않은 앱이라 처음 한 번은 경고가 떠요.
+- **macOS** : DMG를 열고 `Pinlet`을 `Applications`로 옮긴 뒤 실행하면 돼요. Apple 공증을 받은 앱이라 경고 없이 열려요.
+- **Windows** : 아직 Microsoft 서명을 받지 않아서 처음 한 번은 `Windows의 PC 보호` 창이 떠요. `추가 정보 > 실행`을 눌러 주세요.
 
-- **macOS** : DMG를 열고 `Pinlet`을 `Applications`로 옮긴 뒤 실행해 주세요. 경고 창이 뜨면 `완료`를 누르고, `시스템 설정 > 개인정보 보호 및 보안`에서 `그래도 열기`를 누르면 돼요.
-- **Windows** : `Windows의 PC 보호` 창이 뜨면 `추가 정보 > 실행`을 눌러 주세요.
-
-macOS에서 `손상되었기 때문에 열 수 없습니다`라고 나오면 터미널에서 아래 명령을 한 번 실행한 뒤 다시 열어 주세요.
-
-```bash
-xattr -dr com.apple.quarantine /Applications/Pinlet.app
-```
+한 번 설치하면 그다음부터는 새 버전이 나올 때마다 알아서 업데이트돼요.
 
 ---
 
@@ -85,6 +79,7 @@ xattr -dr com.apple.quarantine /Applications/Pinlet.app
 - **도구바** — 메뉴 막대( Windows는 트레이 )에서 마커를 바로 놓거나, 한 번에 숨기고 잠그고 지울 수 있어요.
 - **잠금** — 잠긴 마커는 평소와 똑같이 보이고, 끌려고 할 때만 `잠긴 마커예요`라고 알려 줘요.
 - **자동 저장** — 앱을 껐다 켜도 마커는 놓아 둔 자리 그대로예요.
+- **자동 업데이트** — 새 버전이 나오면 몰래 받아 두었다가, 다시 시작할 때 설치해요. 설정에서 직접 확인할 수도 있어요.
 
 <table>
 <tr>
@@ -151,7 +146,13 @@ npm run dist:mac
 npm run dist:win
 ```
 
-`dist/` 폴더에 macOS용 DMG( Apple Silicon · Intel )와 Windows용 설치 파일이 생겨요. Windows 설치 파일은 macOS에서도 Wine 없이 만들어져요.
+`dist/` 폴더에 macOS용 DMG · zip( Apple Silicon · Intel )과 Windows용 설치 파일, 자동 업데이트용 `latest*.yml`이 생겨요. Windows 설치 파일은 macOS에서도 Wine 없이 만들어져요.
+
+macOS 빌드는 키체인에 있는 Developer ID 인증서로 서명돼요. 공증까지 받으려면 `notarytool store-credentials`로 저장해 둔 프로필 이름을 넘겨 주세요.
+
+```bash
+APPLE_KEYCHAIN_PROFILE=pinlet-notary npm run dist:mac
+```
 
 ### 동작 확인
 
